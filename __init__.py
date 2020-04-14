@@ -121,6 +121,10 @@ def transferTo(browser):
     # those commands eventually rely on SQL commands which are easier
     ## on cards :
     mw.col.db.execute("update cards set id = ? where id = ?", cid1, cid2)
+    if config["Change deck"] == "Yes" :
+        mw.col.db.execute("update cards set did = ? where id = ?", old.did, cid1)
+        mw.col.db.execute("update cards set odid = ? where id = ?", old.odid, cid1)
+
     mw.col.db.execute("update cards set due = ? where id = ?", old.due, cid1)
     mw.col.db.execute("update cards set factor = ? where id = ?", old.factor, cid1)
     mw.col.db.execute("update cards set flags = ? where id = ?", old.flags, cid1)
@@ -129,7 +133,6 @@ def transferTo(browser):
     mw.col.db.execute("update cards set left = ? where id = ?", old.left, cid1)
     mw.col.db.execute("update cards set mod = ? where id = ?", old.mod, cid1)
     mw.col.db.execute("update cards set usn = -1 where id = ?", cid1) # -1 to force sync
-    mw.col.db.execute("update cards set odid = ? where id = ?", old.odid, cid1)
     mw.col.db.execute("update cards set odue = ? where id = ?", old.odue, cid1)
     mw.col.db.execute("update cards set reps = ? where id = ?", old.reps, cid1)
     mw.col.db.execute("update cards set queue = ? where id = ?", old.queue, cid1)

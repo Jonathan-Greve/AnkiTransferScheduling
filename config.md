@@ -1,4 +1,8 @@
-<font color="#cf0505">*Delete old card*</font>  : If "Yes", the card from which properties and historical data have been taken will be deleted after the transfer. Convenient if you use this add-on to merge two notes in one note with two cards, as I do.
+<font color="#cf0505">*Change deck*</font>  : If "Yes", the card to which historical data is transferred is also put in the same deck as the card from which data have been taken.
+
+<center><font color="#087f81">(Yes/No)</font></center>
+
+<font color="#cf0505">*Delete old card*</font>  : If "Yes", the card from which properties and historical data have been taken is deleted after the transfer. Convenient if you use this add-on to merge two notes in one note with two cards, as I do.
 
 <center><font color="#087f81">(Yes/No)</font></center>
 
