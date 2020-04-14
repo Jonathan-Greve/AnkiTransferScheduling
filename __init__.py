@@ -89,14 +89,32 @@ def transferTo(browser):
 
     # the following will try to give a new cid to the old card as long as it fails (because of unique cid constraint)
     # cid is the epoch milliseconds date of the card creation so changing it by up to 100 will not make a big difference
+#    i = 0
+#    while True :
+#        i += 1
+#        try :
+#            mw.col.db.execute("update cards set id = ? where id = ?", cid1-i, cid1) 
+#            break
+#        except : #sqlite3.IntegrityError :
+#            pass
+
+    #cid1 = 1429369872289
     i = 0
+    #liste = mw.col.db.list("select id from revlog where cid = ?", 111)
     while True :
         i += 1
         try :
-            mw.col.db.execute("update cards set id = ? where id = ?", cid1-i, cid1) 
+            # first check that the cid is not used in the revlog (possibly by a deleted card)
+            # if it was used by a deleted card, it would not fail the sqlite3.Intregrity test
+            # but it would put the history of the deleted card on the old card, which is not acceptable
+            liste = mw.col.db.list("select id from revlog where cid = ?", cid1-i)
+            if len(liste) > 0 : 
+                raise 
+            mw.col.db.execute("update cards set id = ? where id = ?", cid1-i, cid1) # will fail if the cid is already taken
             break
         except : #sqlite3.IntegrityError :
             pass
+
 
     # Transfer all data from the old to the new
     # all those operations could be done with the anki python commands and then using flush()
