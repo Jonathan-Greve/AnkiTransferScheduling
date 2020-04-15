@@ -144,6 +144,7 @@ def transferTo(browser):
     ### delete the old note if it is required
     if config["Delete old card"] == "Yes" :
         mw.col.db.execute("delete from notes where id = ?", old.nid) # SQL instead of mw.col.remNotes()
+        mw.col.db.execute("delete from cards where nid = ?", old.nid) # SQL instead of mw.col.remNotes()
 
     ## on the collection :
     epoch = str(time.time()).replace(".", "")[0:13]
