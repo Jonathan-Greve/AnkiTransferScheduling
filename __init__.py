@@ -149,7 +149,7 @@ def transferTo(browser):
     ## on the collection :
     epoch = str(time.time()).replace(".", "")[0:13]
     mw.col.db.execute("update col set mod = ?", epoch) # update modification time of the collection
-    mw.col.db.execute("update col set usn = -1") # -1 to force sync
+    #mw.col.db.execute("update col set usn = -1") # -1 to force sync BEWARE this line broke sync after a certain version of anki, see https://forums.ankiweb.net/t/syncing-with-ankiweb-downloads-entire-deck-when-change-is-made-in-local-deck/1868/4
 
     # Refresh the browser
     browser.search()
