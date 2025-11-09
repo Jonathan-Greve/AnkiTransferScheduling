@@ -54,6 +54,14 @@ This is an enhanced fork of Samuel Allain's [original addon](https://gitlab.com/
 6. Press `Ctrl+Alt+V` or go to `Cards` → `Scheduling data : Transfer to`
 7. Verify the transfer in the card's Info tab
 
+### Complete Data Transfer
+
+This addon copies **all scheduling information** from the source card to the destination card. When you open the Card Info window (`Ctrl+Shift+I` in the card browser) on both cards, they will display identical information:
+
+![Card Info showing complete scheduling data](screenshots/card_info_00.png)
+
+*The Card Info window shows all the data that gets transferred, including review history, FSRS parameters, and the forgetting curve.*
+
 ### What Gets Transferred?
 
 ✅ **Basic Scheduling**:
