@@ -48,10 +48,13 @@ This is an enhanced fork of Samuel Allain's [original addon](https://gitlab.com/
 
 1. Open Anki Browser (Browse button)
 2. **Important**: Switch to **Card mode** (not Note mode) - toggle at the top
-3. Select the **OLD card** (has review history you want to keep)
-4. Press `Ctrl+Alt+C` or go to `Cards` → `Scheduling data : Transfer from`
-5. Select the **NEW card** (will receive the data)
-6. Press `Ctrl+Alt+V` or go to `Cards` → `Scheduling data : Transfer to`
+3. Right-click on the **OLD card** (has review history you want to keep)
+4. Select `Scheduling data : Transfer from` or press `Ctrl+Alt+C`
+
+![Card right-click menu options](screenshots/card_options_00.png)
+
+5. Right-click on the **NEW card** (will receive the data)
+6. Select `Scheduling data : Transfer to` or press `Ctrl+Alt+V`
 7. Verify the transfer in the card's Info tab
 
 ### Complete Data Transfer
