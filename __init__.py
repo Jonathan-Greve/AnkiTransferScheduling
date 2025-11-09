@@ -1,8 +1,16 @@
 # -*- coding: utf-8 -*-
-# Copyright: Samuel Allain
+# Copyright: Samuel Allain (original author, 2020)
+# Copyright: Jonathan Greve (FSRS enhancements and bug fixes, 2025)
 # License: GNU GPL, version 3 or later; http://www.gnu.org/copyleft/gpl.html
+#
 # Transfer scheduling data and properties from one card to another,
 # useful to merge two notes in one notes with two cards.
+#
+# MODIFICATIONS (2025 by Jonathan Greve):
+# - Fixed critical bug: Card attributes now properly transferred after ID swap
+# - Added FSRS data transfer (memory state, stability, difficulty, desired retention)
+# - Enhanced debugging and error handling
+# - Read FSRS data from database before ID swap to ensure correct transfer
 
 """
 In the browser,
@@ -91,28 +99,14 @@ def transferTo(browser):
     note1 = mw.col.get_note(card1.nid)
     print("Old card : " + str(cid1) + ", new card : " + str(cid2))
 
-    # Transfer all attributes from the old card to the new card
-    # Previously used SQL commands with .checkpoint() but this way was deprecated
-    if config["Change deck"] == "Yes" :
-        #mw.col.db.execute("update cards set did = ? where id = ?", old.did, cid1)
-        #mw.col.db.execute("update cards set odid = ? where id = ?", old.odid, cid1)
-        card2.did = card1.did
-        card2.odid = card1.odid
-    card2.due = card1.due
-    card2.factor = card1.factor
-    card2.flags = card1.flags
-    card2.ivl = card1.ivl
-    card2.lapses = card1.lapses
-    card2.left = card1.left
-    card2.mod = card1.mod
-    card2.usn = -1
-    card2.odue = card1.odue
-    card2.reps = card1.reps
-    card2.queue = card1.queue
-    card2.type = card1.type
-
-    # Effective update
-    mw.col.update_card(card2)
+    # IMPORTANT: Read the FSRS data from the old card BEFORE we swap IDs
+    # The 'data' field contains FSRS memory state (stability, difficulty), desired retention, etc.
+    try:
+        old_card_data = mw.col.db.scalar("SELECT data FROM cards WHERE id = ?", cid1)
+        print(f"OLD Card (cid={cid1}) data BEFORE swap: type={type(old_card_data)}, len={len(old_card_data) if old_card_data else 0}, value={repr(old_card_data)[:200] if old_card_data else 'None'}")
+    except Exception as e:
+        print(f"Error reading old card data: {e}")
+        old_card_data = ""
 
     # We will give the cid of the old card to the new card, in order to transfer the reviews of revlog
     # 1) we free the cid by giving the the old card a different one
@@ -138,8 +132,81 @@ def transferTo(browser):
             pass
 
     # 2) now that the cid is free, we can give it to the new card
-    mw.col.db.execute("update cards set id = ? where id = ?", cid1, cid2) # TODO UPDATE
+    mw.col.db.execute("update cards set id = ? where id = ?", cid1, cid2)
     print("Put " + str(cid1) + " as the new id of the new card")
+
+    # 3) NOW update all the scheduling attributes via SQL (using the swapped ID)
+    # Build the SQL update with optional deck and FSRS fields
+    # Note: In newer Anki versions, 'data' field is NOT NULL, so we need to handle it carefully
+
+    # Determine if we should transfer FSRS data
+    transfer_fsrs = config["Transfer FSRS data"] == "Yes" and old_card_data is not None and old_card_data != ""
+    print(f"Transfer FSRS: {transfer_fsrs} (config={config['Transfer FSRS data']}, has_data={old_card_data is not None and old_card_data != ''})")
+
+    if config["Change deck"] == "Yes":
+        if transfer_fsrs:
+            sql_update = """
+                UPDATE cards SET
+                    did = ?, odid = ?, due = ?, factor = ?, flags = ?,
+                    ivl = ?, lapses = ?, left = ?, mod = ?, usn = ?,
+                    odue = ?, reps = ?, queue = ?, type = ?, data = ?
+                WHERE id = ?
+            """
+            params = (
+                card1.did, card1.odid, card1.due, card1.factor, card1.flags,
+                card1.ivl, card1.lapses, card1.left, card1.mod, -1,
+                card1.odue, card1.reps, card1.queue, card1.type, old_card_data,
+                cid1
+            )
+        else:
+            sql_update = """
+                UPDATE cards SET
+                    did = ?, odid = ?, due = ?, factor = ?, flags = ?,
+                    ivl = ?, lapses = ?, left = ?, mod = ?, usn = ?,
+                    odue = ?, reps = ?, queue = ?, type = ?
+                WHERE id = ?
+            """
+            params = (
+                card1.did, card1.odid, card1.due, card1.factor, card1.flags,
+                card1.ivl, card1.lapses, card1.left, card1.mod, -1,
+                card1.odue, card1.reps, card1.queue, card1.type,
+                cid1
+            )
+    else:
+        if transfer_fsrs:
+            sql_update = """
+                UPDATE cards SET
+                    due = ?, factor = ?, flags = ?, ivl = ?, lapses = ?,
+                    left = ?, mod = ?, usn = ?, odue = ?, reps = ?,
+                    queue = ?, type = ?, data = ?
+                WHERE id = ?
+            """
+            params = (
+                card1.due, card1.factor, card1.flags, card1.ivl, card1.lapses,
+                card1.left, card1.mod, -1, card1.odue, card1.reps,
+                card1.queue, card1.type, old_card_data,
+                cid1
+            )
+        else:
+            sql_update = """
+                UPDATE cards SET
+                    due = ?, factor = ?, flags = ?, ivl = ?, lapses = ?,
+                    left = ?, mod = ?, usn = ?, odue = ?, reps = ?,
+                    queue = ?, type = ?
+                WHERE id = ?
+            """
+            params = (
+                card1.due, card1.factor, card1.flags, card1.ivl, card1.lapses,
+                card1.left, card1.mod, -1, card1.odue, card1.reps,
+                card1.queue, card1.type,
+                cid1
+            )
+
+    mw.col.db.execute(sql_update, *params)
+    if transfer_fsrs:
+        print("Updated all scheduling data including FSRS via SQL")
+    else:
+        print("Updated all scheduling data (no FSRS data to transfer)")
 
     ### on notes :
     mw.col.db.execute("update notes set usn = -1 where id = ?", card2.nid) # -1 to force sync, TODO UPDATE
