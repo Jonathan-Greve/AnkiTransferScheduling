@@ -32,4 +32,4 @@ This addon copies **all scheduling information** from the source card to the des
 - Decay factor
 - Last review time
 
-By Jonathan Greve
+By [Jonathan Greve](https://github.com/Jonathan-Greve)
